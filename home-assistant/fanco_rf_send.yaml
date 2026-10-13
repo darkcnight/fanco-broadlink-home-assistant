@@ -1,0 +1,44 @@
+# Script: send one Fanco remote button through a Broadlink, rotating through several captures.
+#
+# Create it in Settings > Automations & Scenes > Scripts > Add script > Edit in YAML, with the
+# script ID `fanco_rf_send`. Also create a Counter helper named "Fanco RF Sequence"
+# (counter.fanco_rf_sequence) in Settings > Devices & services > Helpers.
+#
+# Paste your own captures from tools/fanco_learn.py (4 per button). The ones below are placeholders.
+#
+# Why rotate: on the 33-bit remotes every press carries a changing last byte, and the fan ignores a frame
+# identical to the last one it heard. Sending the next capture each time means a command is never a repeat.
+# On fixed-code remotes rotating is harmless, and it stops one weak capture being used every time.
+alias: Fanco - Send RF Button
+mode: queued
+fields:
+  button:
+    description: A key of `codes` below, e.g. light, off, 1 ... 6 (or low, medium, high)
+    example: "3"
+sequence:
+  - variables:
+      codes:
+        light: [b64:PASTE_1, b64:PASTE_2, b64:PASTE_3, b64:PASTE_4]
+        "off": [b64:PASTE_1, b64:PASTE_2, b64:PASTE_3, b64:PASTE_4]
+        "1": [b64:PASTE_1, b64:PASTE_2, b64:PASTE_3, b64:PASTE_4]
+        "2": [b64:PASTE_1, b64:PASTE_2, b64:PASTE_3, b64:PASTE_4]
+        "3": [b64:PASTE_1, b64:PASTE_2, b64:PASTE_3, b64:PASTE_4]
+        "4": [b64:PASTE_1, b64:PASTE_2, b64:PASTE_3, b64:PASTE_4]
+        "5": [b64:PASTE_1, b64:PASTE_2, b64:PASTE_3, b64:PASTE_4]
+        "6": [b64:PASTE_1, b64:PASTE_2, b64:PASTE_3, b64:PASTE_4]
+      choices: "{{ codes[button | string] }}"
+      code: "{{ choices[states('counter.fanco_rf_sequence') | int(0) % (choices | count)] }}"
+  - action: counter.increment
+    target:
+      entity_id: counter.fanco_rf_sequence
+  - action: remote.send_command
+    target:
+      entity_id: remote.YOUR_BROADLINK
+    data:
+      command: "{{ code }}"
+      # Fan at the edge of range? Use "{{ 1 if button == 'light' else 3 }}" to send speed/off buttons
+      # 3 times (the fan just beeps again). Never repeat the light: it is a toggle, so a repeat turns it back.
+      num_repeats: 1
+      delay_secs: 0.4
+  - delay:
+      milliseconds: 300

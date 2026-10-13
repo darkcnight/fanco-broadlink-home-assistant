@@ -1,0 +1,39 @@
+# Script: set the fan to speed 0..N and remember it (the fan sends nothing back, so HA tracks an
+# assumed speed). Script ID `fanco_set_speed`.
+#
+# Needs a Number helper "Fanco Speed" (input_number.fanco_speed), min 0, max = your speed count, step 1.
+# Optional: if the fan's power is on a smart relay, the `if` block switches it on first and gives the
+# receiver 3 s to boot. Delete that block if you have no relay.
+alias: Fanco - Set Speed
+mode: queued
+fields:
+  speed:
+    description: 0 (off) to 6 (use 3 for Low/Medium/High remotes)
+    example: 3
+sequence:
+  - variables:
+      max_speed: 6
+      target_speed: "{{ [[speed | int(0), 0] | max, max_speed] | min }}"
+      # 6-speed remote: buttons "1".."6". For a Low/Medium/High remote use:
+      # button: "{{ ['off', 'low', 'medium', 'high'][target_speed] }}"
+      button: "{{ target_speed if target_speed > 0 else 'off' }}"
+  - if:
+      - condition: template
+        value_template: "{{ target_speed > 0 }}"
+      - condition: state
+        entity_id: switch.YOUR_FAN_RELAY
+        state: "off"
+    then:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.YOUR_FAN_RELAY
+      - delay:
+          seconds: 3
+  - action: script.fanco_rf_send
+    data:
+      button: "{{ button }}"
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.fanco_speed
+    data:
+      value: "{{ target_speed }}"
