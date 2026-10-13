@@ -11,6 +11,10 @@ The setup packet is sent straight to the Broadlink's own address (default 192.16
 default is a broadcast, which silently goes out the wrong interface when your computer also has
 Ethernet, so the Broadlink never hears it.
 
+Security note: the Broadlink provisioning protocol sends your Wi-Fi password UNENCRYPTED over the
+Broadlink's open setup network. Do this somewhere nobody else is in Wi-Fi range of that network, and
+prefer a separate IoT SSID whose password you can change.
+
 Security modes: 0 none, 1 WEP, 2 WPA1, 3 WPA2, 4 WPA1/WPA2 mixed. Try 4 if 3 does not work.
 A network with no internet access (an IoT VLAN) is fine: the Broadlink works fully locally.
 """

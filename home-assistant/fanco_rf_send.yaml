@@ -26,6 +26,13 @@ sequence:
         "4": [b64:PASTE_1, b64:PASTE_2, b64:PASTE_3, b64:PASTE_4]
         "5": [b64:PASTE_1, b64:PASTE_2, b64:PASTE_3, b64:PASTE_4]
         "6": [b64:PASTE_1, b64:PASTE_2, b64:PASTE_3, b64:PASTE_4]
+  - if:
+      - condition: template
+        value_template: "{{ (button | string) not in codes }}"
+    then:
+      - stop: "Unknown button"
+        error: true
+  - variables:
       choices: "{{ codes[button | string] }}"
       code: "{{ choices[states('counter.fanco_rf_sequence') | int(0) % (choices | count)] }}"
   - action: counter.increment
